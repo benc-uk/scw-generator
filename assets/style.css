@@ -20,29 +20,32 @@ canvas {
 select {
   font-size: 1.5rem;
   vertical-align: middle;
+  border-radius: 15px;
 }
 
 .label {
   display: inline;
   font-size: 1.2rem;
+  align-self: center;
 }
 
 .nav {
   color: white;
-  padding-left: 1rem;
   background-color: var(--sky-500);
-  height: 4rem;
-  line-height: 3.5rem;
+  padding: 1rem;
 }
 
 .tools {
-  padding-left: 1rem;
   background-color: var(--slate-200);
-  height: 4rem;
-  line-height: 3.5rem;
+  padding: 1rem;
 }
 
 .logo {
   font-size: 1.8rem;
   margin-right: 2rem;
+}
+
+.flex {
+  display: flex;
+  gap: 1rem;
 }

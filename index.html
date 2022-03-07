@@ -14,7 +14,7 @@
   </head>
   <body>
     <main x-data="app">
-      <div class="nav">
+      <div class="nav flex">
         <span class="logo">SCW Generator 🎵</span>
 
         <select class="pure-input-1-2" x-model="sampleCount">
@@ -36,10 +36,11 @@
         <canvas id="canvas" width="1200" height="400"> </canvas>
       </div>
 
-      <div class="tools">
+      <div class="tools flex">
         <div class="label">Waveform Tools</div>
         <button class="pure-button pure-button-primary" @click="saw()">SAW 🪚</button>
         <button class="pure-button pure-button-primary" @click="square()">SQUARE 🟩</button>
+        <button class="pure-button pure-button-primary" @click="sine()">SINE 🔔</button>
         <button class="pure-button pure-button-primary" @click="noise()">NOISE ☢️</button>
       </div>
     </main>

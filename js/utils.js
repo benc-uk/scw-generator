@@ -58,15 +58,13 @@ export function bufferToWavBlob(abuffer, len) {
   }
 }
 
-export const saveBlob = (function () {
+export function saveBlob(blob, name) {
   var a = document.createElement('a')
   document.body.appendChild(a)
   a.style = 'display: none'
-  return function (blob, name) {
-    const url = window.URL.createObjectURL(blob)
-    a.href = url
-    a.download = name
-    a.click()
-    window.URL.revokeObjectURL(url)
-  }
-})()
+  const url = window.URL.createObjectURL(blob)
+  a.href = url
+  a.download = name
+  a.click()
+  window.URL.revokeObjectURL(url)
+}

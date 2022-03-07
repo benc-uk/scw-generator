@@ -24,6 +24,7 @@ Alpine.data('app', () => ({
   saw,
   square,
   noise,
+  sine,
 
   init() {
     buffer = audio.createBuffer(this.sampleCount)
@@ -54,6 +55,13 @@ function square() {
 function noise() {
   for (var i = 0; i < buffer.length; i++) {
     buffer.getChannelData(0)[i] = Math.random() * 2 - 1
+  }
+  drawBuffer()
+}
+
+function sine() {
+  for (var i = 0; i < buffer.length; i++) {
+    buffer.getChannelData(0)[i] = Math.sin((1 * i * Math.PI * 2) / buffer.length)
   }
   drawBuffer()
 }

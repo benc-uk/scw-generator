@@ -1,0 +1,48 @@
+#center {
+  text-align: center;
+  padding: 2rem;
+}
+
+main {
+  padding: 2rem;
+}
+
+button {
+  font-size: 2rem;
+  display: inline-block;
+}
+
+canvas {
+  background-color: #222;
+  width: 100%;
+}
+
+select {
+  font-size: 1.5rem;
+  vertical-align: middle;
+}
+
+.label {
+  display: inline;
+  font-size: 1.2rem;
+}
+
+.nav {
+  color: white;
+  padding-left: 1rem;
+  background-color: var(--sky-500);
+  height: 4rem;
+  line-height: 3.5rem;
+}
+
+.tools {
+  padding-left: 1rem;
+  background-color: var(--slate-200);
+  height: 4rem;
+  line-height: 3.5rem;
+}
+
+.logo {
+  font-size: 1.8rem;
+  margin-right: 2rem;
+}

@@ -7,6 +7,8 @@
     <link rel="shortcut icon" href="assets/icon.png" type="image/png" />
 
     <link rel="stylesheet" href="https://unpkg.com/purecss@2.0.6/build/pure-min.css" integrity="sha384-Uu6IeWbM+gzNVXJcM9XV3SohHtmWE+3VGi496jvgX1jyvDTXfdK+rfZc8C1Aehk5" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
     <link rel="stylesheet" href="assets/colors.css" />
     <link rel="stylesheet" href="assets/style.css" />
 
@@ -16,9 +18,7 @@
   </head>
   <body>
     <main x-data="app">
-      <div class="nav flex">
-        <span class="logo">SCW Generator 🎵</span>
-
+      <div class="nav1 flex">
         <select class="pure-input-1-2" x-model="sampleCount">
           <option disabled>Sample Count</option>
           <option>200</option>
@@ -29,41 +29,66 @@
           <option>600</option>
           <option>674</option>
         </select>
-
-        <button class="pure-button" @click="play()">DRONE ▶️</button>
-        <button class="pure-button" @click="playNote()">NOTE 🎶</button>
-        <button class="pure-button" @click="stop()">STOP ⏹️</button>
         &nbsp;&nbsp;
-        <button class="pure-button" @click="save()">EXPORT 💾</button>
-        <div x-html="`${sampleRate} kHz`"></div>
+        <div class="tab" :class="tab == 'simple' || 'tab-nosel'" @click="tab = 'simple'">SIMPLE</div>
+        <div class="tab" :class="tab == 'synth' || 'tab-nosel'" @click="tab = 'synth'">SYNTH</div>
+        <div class="push flex gap">
+          <div x-html="`v${version} - Audio device rate<br>${sampleRate} Hz`"></div>
+          <button class="pure-button" @click="save()">EXPORT <i class="fa-solid fa-download fa-fw"></i></button>
+        </div>
+      </div>
+
+      <div class="nav2 flex gap" id="simpleTab" x-show="tab == 'simple'">
+        <button class="pure-button" @click="play()">PLAY <i class="fa-solid fa-play fa-fw"></i></button>
+        <button class="pure-button" @click="stop()">STOP <i class="fa-solid fa-stop fa-fw"></i></button>
+      </div>
+
+      <div class="nav2 flex gap" id="synthTab" x-show="tab == 'synth'">
+        <button class="pure-button" @click="playSynth()">NOTE <i class="fa-solid fa-music fa-fw"></i></button>
+        <div class="label">Envelope</div>
+        <input id="releaseTime" type="range" min="100" max="8000" x-model="releaseTime" />
+        <label for="releaseTime">Release</label>
+
+        <div class="label">Filter</div>
+        <input id="filterCut" type="range" min="50" max="4000" x-model="filterCut" />
+        <label for="filterCut">Cut</label>
+        &nbsp;&nbsp;
+        <input id="filterQ" type="range" min="0" max="20" x-model="filterQ" />
+        <label for="filterQ">Res</label>
       </div>
 
       <div id="center">
         <canvas id="canvas" width="1200" height="400"> </canvas>
       </div>
 
-      <div class="tools flex">
-        <div class="label">Waveform Tools</div>
-        <button class="pure-button pure-button-primary" @click="saw()">SAW 🪚</button>
-        <button class="pure-button pure-button-primary" @click="square()">SQUARE 🟩</button>
-        <button class="pure-button pure-button-primary" @click="sine()">SINE 🔔</button>
-        <button class="pure-button pure-button-primary" @click="noise()">NOISE ☢️</button>
-        &nbsp;&nbsp;&nbsp;&nbsp;
-        <button class="pure-button button-success" @click="phase()">DOUBLE ❌</button>
-        &nbsp;&nbsp;&nbsp;&nbsp;
-        <button class="pure-button button-warning" @click="amp(foldAmount)">AMP 🔊</button>
-        <button class="pure-button button-warning" @click="amp(foldAmount, true)">AMP FOLD 🙃</button>
+      <div class="tools flex gap">
+        <div class="label">Generators:</div>
+        <button class="w7 pure-button pure-button-primary" @click="genSaw()">SAW</button>
+        <button class="w7 pure-button pure-button-primary" @click="genSquare()">SQUARE</button>
+        <button class="w7 pure-button pure-button-primary" @click="genTriangle()">TRIANGLE</button>
+        <button class="w7 pure-button pure-button-primary" @click="genSine()">SINE</button>
+        <button class="w7 pure-button pure-button-primary" @click="genNoise()">NOISE</button>
+      </div>
+
+      <div class="tools flex gap">
+        <div class="label">Modifiers:</div>
+        <button class="pure-button button-success" @click="modPitch(2)">DOUBLE <i class="fa-solid fa-angles-left"></i></button>
+        <button class="pure-button button-success" @click="modLoopClean()">CLEAN LOOP <i class="fa-solid fa-repeat"></i></button>
+        <div class="divider"></div>
+        <button class="pure-button button-success" @click="modSmooth(smoothSize)">SMOOTH <i class="fa-solid fa-bezier-curve"></i></button>
+        <select x-model="smoothSize">
+          <option value="2">Size: 2</option>
+          <option value="4">Size: 4</option>
+          <option value="8">Size: 8</option>
+          <option value="12">Size: 12</option>
+          <option value="16">Size: 16</option>
+        </select>
+        <div class="divider"></div>
+        <button class="pure-button button-success" @click="modAmp(foldAmount)">AMP & CLIP <i class="fa-solid fa-arrow-up-short-wide"></i></button>
+        <button class="pure-button button-success" @click="modAmp(foldAmount, true)">AMP & FOLD <i class="fa-solid fa-arrow-trend-down"></i></button>
 
         <input id="amount" type="range" min="0" max="200" x-model="foldAmount" />
-        <label for="amount">Amount</label>
-      </div>
-      <div class="tools flex">
-        <div class="label">Filter</div>
-        <input id="filterCut" type="range" min="50" max="3000" x-model="filterCut" />
-        <label for="filterCut">Cut</label>
-        &nbsp;&nbsp;&nbsp;&nbsp;
-        <input id="filterQ" type="range" min="0" max="20" x-model="filterQ" />
-        <label for="filterQ">Res</label>
+        <label for="amount">Amp amount</label>
       </div>
     </main>
   </body>

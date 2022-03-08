@@ -1,55 +1,42 @@
-import { bufferToWavBlob, saveBlob } from './utils.js'
-
-const ctx = new (window.AudioContext || window.webkitAudioContext)()
-
+let filter
+let gainNode
 let source = null
-let filter = null
 
-export function init(sampleCount, filterCut, filterQ) {
+const ctx = new AudioContext()
+
+export function init(buff, filterCut, filterQ) {
   filter = ctx.createBiquadFilter()
+  gainNode = ctx.createGain()
   filter.Q.value = filterQ
   filter.frequency.value = filterCut
-  return createBuffer(sampleCount)
-}
-
-export function createBuffer(sampleCount) {
-  return ctx.createBuffer(1, sampleCount, ctx.sampleRate)
-}
-
-export function play(arrayBuf) {
-  if (source) return
 
   source = ctx.createBufferSource()
-  source.buffer = arrayBuf
+  source.buffer = buff
   source.loop = true
-
-  source.connect(filter)
-  filter.connect(ctx.destination)
-
-  source.start()
-}
-
-export function playNote(arrayBuf) {
-  if (source) return
-
-  source = ctx.createBufferSource()
-  source.buffer = arrayBuf
-  source.loop = true
-
-  const gainNode = ctx.createGain()
-  gainNode.gain.value = 1
-  gainNode.gain.exponentialRampToValueAtTime(0.0000001, ctx.currentTime + 0.8)
-
-  setTimeout(() => {
-    source.stop()
-    source = null
-  }, 810)
-
+  gainNode.gain.value = 0
   source.connect(filter)
   filter.connect(gainNode)
   gainNode.connect(ctx.destination)
+}
 
-  source.start()
+export function play() {
+  startAudio()
+  gainNode.gain.value = 1
+}
+
+export function playNote(releaseTime) {
+  const t = releaseTime / 1000
+  startAudio()
+  playing = true
+  gainNode.gain.cancelAndHoldAtTime(ctx.currentTime)
+  gainNode.gain.setValueAtTime(1, ctx.currentTime)
+  gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + t)
+  gainNode.gain.setValueAtTime(0, ctx.currentTime + t + 0.001)
+}
+
+export function stop() {
+  gainNode.gain.value = 0.0
+  ctx.suspend()
 }
 
 export function setFilterParams(filterQ, filterCut) {
@@ -57,14 +44,14 @@ export function setFilterParams(filterQ, filterCut) {
   filter.frequency.value = filterCut
 }
 
-export function stop() {
-  if (!source) return
-  source.stop()
-  source = null
-}
+function startAudio() {
+  if (ctx.state != 'running') {
+    ctx.resume()
+  }
 
-// Exporting functions
-export function saveWav(arrayBuf) {
-  const blob = bufferToWavBlob(arrayBuf, arrayBuf.length)
-  saveBlob(blob, 'output.wav')
+  try {
+    source.start()
+  } catch (e) {
+    // suppress error
+  }
 }

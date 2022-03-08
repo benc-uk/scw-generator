@@ -78,3 +78,13 @@ export function cloneBuffer(buffer) {
 
   return clone
 }
+
+// Exporting functions
+export function saveWav(arrayBuf) {
+  const blob = bufferToWavBlob(arrayBuf, arrayBuf.length)
+  saveBlob(blob, 'output.wav')
+}
+
+function avg(v) {
+  return v.reduce((a, b) => a + b, 0) / v.length
+}

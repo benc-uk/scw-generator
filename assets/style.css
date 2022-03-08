@@ -4,7 +4,8 @@
 }
 
 main {
-  padding: 2rem;
+  padding: 0rem;
+  margin: 0rem;
 }
 
 button {
@@ -22,6 +23,7 @@ select {
   font-size: 1.5rem;
   vertical-align: middle;
   border-radius: 15px;
+  margin: 0.6rem;
 }
 
 .label {
@@ -31,7 +33,16 @@ select {
   font-weight: bold;
 }
 
-.nav {
+.nav1 {
+  color: white;
+  background-color: var(--sky-600);
+  padding: 1rem 1rem 0rem 1rem;
+}
+.nav1 .pure-button {
+  height: 2.5rem;
+}
+
+.nav2 {
   color: white;
   background-color: var(--sky-500);
   padding: 1rem;
@@ -47,8 +58,15 @@ select {
   margin-right: 2rem;
 }
 
+.push {
+  margin-left: auto;
+  text-align: right;
+}
+
 .flex {
   display: flex;
+}
+.gap {
   gap: 1rem;
 }
 
@@ -76,4 +94,42 @@ select {
 .button-secondary {
   background: rgb(66, 184, 221);
   /* this is a light blue */
+}
+
+.tab {
+  background-color: var(--sky-500);
+  font-size: 1.8rem;
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+  border-top: var(--sky-700) solid 2px;
+  border-left: var(--sky-700) solid 2px;
+  border-right: var(--sky-700) solid 2px;
+  border-bottom: none;
+  padding: 0.5rem;
+  cursor: pointer;
+  margin-right: 0.3rem;
+}
+
+.tab-nosel {
+  background-color: var(--sky-600);
+  color: #aaa;
+  box-shadow: inset 0px -11px 18px -10px var(--sky-700);
+}
+
+.icon {
+  width: 25px;
+  vertical-align: middle;
+}
+
+label {
+  margin-top: 0.5rem;
+}
+
+.divider {
+  width: 3px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.w7 {
+  width: 7rem;
 }

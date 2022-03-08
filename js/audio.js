@@ -27,7 +27,6 @@ export function play() {
 export function playNote(releaseTime) {
   const t = releaseTime / 1000
   startAudio()
-  playing = true
   gainNode.gain.cancelAndHoldAtTime(ctx.currentTime)
   gainNode.gain.setValueAtTime(1, ctx.currentTime)
   gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + t)

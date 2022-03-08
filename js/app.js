@@ -1,4 +1,5 @@
 import * as audio from './audio.js'
+import * as util from './utils.js'
 import Alpine from 'https://unpkg.com/alpinejs@3.7.0/dist/module.esm.js'
 const VERSION = '0.0.1'
 
@@ -8,11 +9,13 @@ let buffer = null
 Alpine.data('app', () => ({
   version: VERSION,
   sampleCount: 337,
-  buffer,
-  audioRate: ctx.sampleRate,
+  foldAmount: 35,
+  filterCut: 3000,
+  filterQ: 0,
+  sampleRate: ctx.sampleRate,
 
-  play: () => {
-    audio.play(buffer)
+  play: (fq, fc) => {
+    audio.play(buffer, fq, fc)
   },
   stop: () => {
     audio.stop()
@@ -25,9 +28,11 @@ Alpine.data('app', () => ({
   square,
   noise,
   sine,
+  phase,
+  amp,
 
   init() {
-    buffer = audio.createBuffer(this.sampleCount)
+    buffer = audio.init(this.sampleCount, this.filterCut, this.filterQ)
     saw()
 
     this.$watch('sampleCount', () => {
@@ -35,10 +40,43 @@ Alpine.data('app', () => ({
       buffer = audio.createBuffer(this.sampleCount)
       this.saw()
     })
+
+    this.$watch('filterCut', () => {
+      audio.setFilterParams(this.filterQ, this.filterCut)
+    })
+    this.$watch('filterQ', () => {
+      audio.setFilterParams(this.filterQ, this.filterCut)
+    })
   },
 }))
 
 Alpine.start()
+
+function phase() {
+  const clone = audio.createBuffer(buffer.length)
+  for (var i = 0; i < buffer.length; i++) {
+    clone.getChannelData(0)[i] = buffer.getChannelData(0)[i]
+  }
+
+  for (var i = 0; i < buffer.length; i++) {
+    buffer.getChannelData(0)[i] = clone.getChannelData(0)[(i * 2) % buffer.length]
+  }
+  drawBuffer()
+}
+
+function amp(amount = 0, fold = false) {
+  for (var i = 0; i < buffer.length; i++) {
+    let newVal = buffer.getChannelData(0)[i] * (1 + amount / 100)
+    if (fold) {
+      newVal = newVal > 1 ? 1 - (newVal - 1) : newVal
+      newVal = newVal < -1 ? -(newVal + 2) : newVal
+    } else {
+      newVal = Math.min(1, Math.max(-1, newVal))
+    }
+    buffer.getChannelData(0)[i] = newVal
+  }
+  drawBuffer()
+}
 
 function saw() {
   for (var i = 0; i < buffer.length; i++) {
@@ -46,12 +84,14 @@ function saw() {
   }
   drawBuffer()
 }
+
 function square() {
   for (var i = 0; i < buffer.length; i++) {
     buffer.getChannelData(0)[i] = i < buffer.length / 2 ? -1 : +1
   }
   drawBuffer()
 }
+
 function noise() {
   for (var i = 0; i < buffer.length; i++) {
     buffer.getChannelData(0)[i] = Math.random() * 2 - 1
@@ -66,7 +106,6 @@ function sine() {
   drawBuffer()
 }
 
-// draw buffer content on the canvas
 function drawBuffer() {
   const canvas = document.getElementById('canvas')
   const ctx = canvas.getContext('2d')
@@ -84,6 +123,7 @@ function drawBuffer() {
   ctx.stroke()
 
   ctx.strokeStyle = '#00dd00'
+  ctx.lineWidth = 2
   ctx.beginPath()
   for (var i = 0; i < buffer.length; i++) {
     const x = (i * width) / buffer.length

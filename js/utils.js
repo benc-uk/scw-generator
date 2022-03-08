@@ -68,3 +68,13 @@ export function saveBlob(blob, name) {
   a.click()
   window.URL.revokeObjectURL(url)
 }
+
+export function cloneBuffer(buffer) {
+  const clone = audio.createBuffer(buffer.length)
+
+  for (var i = 0; i < buffer.length; i++) {
+    clone.getChannelData(0)[i] = buffer.getChannelData(0)[i]
+  }
+
+  return clone
+}

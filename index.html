@@ -30,6 +30,7 @@
         <button class="pure-button" @click="stop()">STOP ⏹️</button>
         &nbsp;&nbsp;
         <button class="pure-button" @click="save()">EXPORT 💾</button>
+        <div x-html="`${sampleRate} kHz`"></div>
       </div>
 
       <div id="center">
@@ -42,6 +43,22 @@
         <button class="pure-button pure-button-primary" @click="square()">SQUARE 🟩</button>
         <button class="pure-button pure-button-primary" @click="sine()">SINE 🔔</button>
         <button class="pure-button pure-button-primary" @click="noise()">NOISE ☢️</button>
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <button class="pure-button button-success" @click="phase()">DOUBLE ❌</button>
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <button class="pure-button button-warning" @click="amp(foldAmount)">AMP 🔊</button>
+        <button class="pure-button button-warning" @click="amp(foldAmount, true)">AMP FOLD 🙃</button>
+
+        <input id="amount" type="range" min="0" max="200" x-model="foldAmount" />
+        <label for="amount">Amount</label>
+      </div>
+      <div class="tools flex">
+        <div class="label">Filter</div>
+        <input id="filterCut" type="range" min="50" max="3000" x-model="filterCut" />
+        <label for="filterCut">Cut</label>
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <input id="filterQ" type="range" min="0" max="20" x-model="filterQ" />
+        <label for="filterQ">Res</label>
       </div>
     </main>
   </body>

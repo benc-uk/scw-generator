@@ -29,6 +29,29 @@ export function play(arrayBuf) {
   source.start()
 }
 
+export function playNote(arrayBuf) {
+  if (source) return
+
+  source = ctx.createBufferSource()
+  source.buffer = arrayBuf
+  source.loop = true
+
+  const gainNode = ctx.createGain()
+  gainNode.gain.value = 1
+  gainNode.gain.exponentialRampToValueAtTime(0.0000001, ctx.currentTime + 0.8)
+
+  setTimeout(() => {
+    source.stop()
+    source = null
+  }, 810)
+
+  source.connect(filter)
+  filter.connect(gainNode)
+  gainNode.connect(ctx.destination)
+
+  source.start()
+}
+
 export function setFilterParams(filterQ, filterCut) {
   filter.Q.value = filterQ
   filter.frequency.value = filterCut

@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="shortcut icon" href="assets/icon.png" type="image/png" />
+
     <link rel="stylesheet" href="https://unpkg.com/purecss@2.0.6/build/pure-min.css" integrity="sha384-Uu6IeWbM+gzNVXJcM9XV3SohHtmWE+3VGi496jvgX1jyvDTXfdK+rfZc8C1Aehk5" crossorigin="anonymous" />
     <link rel="stylesheet" href="assets/colors.css" />
     <link rel="stylesheet" href="assets/style.css" />
@@ -21,12 +23,15 @@
           <option disabled>Sample Count</option>
           <option>200</option>
           <option>225</option>
+          <option>256</option>
           <option>337</option>
+          <option>512</option>
           <option>600</option>
           <option>674</option>
         </select>
 
-        <button class="pure-button" @click="play()">PLAY ▶️</button>
+        <button class="pure-button" @click="play()">DRONE ▶️</button>
+        <button class="pure-button" @click="playNote()">NOTE 🎶</button>
         <button class="pure-button" @click="stop()">STOP ⏹️</button>
         &nbsp;&nbsp;
         <button class="pure-button" @click="save()">EXPORT 💾</button>

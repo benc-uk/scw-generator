@@ -14,8 +14,11 @@ Alpine.data('app', () => ({
   filterQ: 0,
   sampleRate: ctx.sampleRate,
 
-  play: (fq, fc) => {
-    audio.play(buffer, fq, fc)
+  play: () => {
+    audio.play(buffer)
+  },
+  playNote: () => {
+    audio.playNote(buffer)
   },
   stop: () => {
     audio.stop()

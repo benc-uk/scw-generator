@@ -1,40 +1,59 @@
-let filter
-let gainNode
+let filter = null
+let gain = null
 let source = null
+let oldFilterCut = 0
+let oldFilterQ = 0
 
+const NEAR_ZERO = 0.00000001
 const ctx = new AudioContext()
 
 export function init(buff, filterCut, filterQ) {
   filter = ctx.createBiquadFilter()
-  gainNode = ctx.createGain()
+  gain = ctx.createGain()
   filter.Q.value = filterQ
   filter.frequency.value = filterCut
 
   source = ctx.createBufferSource()
   source.buffer = buff
   source.loop = true
-  gainNode.gain.value = 0
+  gain.gain.value = 0
   source.connect(filter)
-  filter.connect(gainNode)
-  gainNode.connect(ctx.destination)
+  filter.connect(gain)
+  gain.connect(ctx.destination)
 }
 
 export function play() {
+  oldFilterCut = filter.frequency.value
+  oldFilterQ = filter.Q.value
+  filter.frequency.value = 24000
+  filter.Q.value = 0
+
   startAudio()
-  gainNode.gain.value = 1
+  gain.gain.value = 1
 }
 
-export function playNote(releaseTime) {
-  const t = releaseTime / 1000
+export function playNote(attackTime, releaseTime, sustainTime) {
+  if (gain.gain.value == 1) {
+    stop()
+  }
   startAudio()
-  gainNode.gain.cancelAndHoldAtTime(ctx.currentTime)
-  gainNode.gain.setValueAtTime(1, ctx.currentTime)
-  gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + t)
-  gainNode.gain.setValueAtTime(0, ctx.currentTime + t + 0.001)
+  const now = ctx.currentTime
+
+  const at = attackTime / 1000
+  const rt = releaseTime / 1000
+  const st = sustainTime / 1000
+  gain.gain.cancelScheduledValues(now)
+  gain.gain.setValueAtTime(NEAR_ZERO, now)
+  gain.gain.exponentialRampToValueAtTime(1, now + at)
+  gain.gain.setValueAtTime(1, now + at + st)
+  gain.gain.exponentialRampToValueAtTime(NEAR_ZERO, now + at + rt + st)
+  gain.gain.setValueAtTime(0, now + at + rt + st + 0.0001)
 }
 
 export function stop() {
-  gainNode.gain.value = 0.0
+  gain.gain.value = 0.0
+  filter.frequency.value = oldFilterCut
+  filter.Q.value = oldFilterQ
   ctx.suspend()
 }
 

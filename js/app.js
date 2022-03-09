@@ -1,32 +1,43 @@
 import * as audio from './audio.js'
 import * as utils from './utils.js'
 import Alpine from 'https://unpkg.com/alpinejs@3.7.0/dist/module.esm.js'
-const VERSION = '0.0.2'
+const VERSION = '0.0.3'
+const MAX_UNDO = 30
 
 let buffer = null
 let ctx = null
+let canvas = null
+let undoBuffers = []
+
 Alpine.data('app', () => ({
   version: VERSION,
   tab: 'simple',
   sampleRate: 0,
   sampleCount: 337,
+  drawing: false,
+  folding: true,
 
-  foldAmount: 35,
+  ampAmount: 35,
+  roughAmount: 0.1,
   smoothSize: 4,
 
   filterCut: 3000,
   filterQ: 0,
   releaseTime: 800,
+  attackTime: 100,
+  sustainTime: 500,
 
   play: audio.play,
   stop: audio.stop,
   playSynth() {
-    audio.playNote(this.releaseTime)
+    audio.playNote(this.attackTime, this.releaseTime, this.sustainTime)
   },
 
   save() {
     utils.saveWav(buffer)
   },
+  saveUndoBuffer,
+  undo,
 
   genSaw,
   genSine,
@@ -34,13 +45,17 @@ Alpine.data('app', () => ({
   genNoise,
   genTriangle,
 
+  modMouseDraw,
   modPitch,
   modAmp,
   modSmooth,
   modLoopClean,
+  modRoughen,
 
   init() {
     ctx = new AudioContext()
+    canvas = document.getElementById('canvas')
+
     buffer = ctx.createBuffer(1, this.sampleCount, ctx.sampleRate)
     audio.init(buffer, this.filterCut, this.filterQ)
     this.sampleRate = ctx.sampleRate
@@ -63,19 +78,32 @@ Alpine.data('app', () => ({
 
 Alpine.start()
 
+function modMouseDraw(evt) {
+  if (!this.drawing) return
+
+  const x = evt.offsetX / canvas.getBoundingClientRect().width
+  const y = evt.offsetY / canvas.getBoundingClientRect().height
+  const i = Math.ceil(x * buffer.length)
+  buffer.getChannelData(0)[i] = (1 - y) * 2 - 1
+  buffer.getChannelData(0)[i + 1] = (1 - y) * 2 - 1
+  drawBuffer()
+}
+
 function modPitch(freq) {
-  const clone = ctx.createBuffer(1, this.sampleCount, ctx.sampleRate)
+  saveUndoBuffer()
+  const clone = []
   for (var i = 0; i < buffer.length; i++) {
-    clone.getChannelData(0)[i] = buffer.getChannelData(0)[i]
+    clone[i] = buffer.getChannelData(0)[i]
   }
 
   for (var i = 0; i < buffer.length; i++) {
-    buffer.getChannelData(0)[i] = clone.getChannelData(0)[(i * freq) % buffer.length]
+    buffer.getChannelData(0)[i] = clone[(i * freq) % buffer.length]
   }
   drawBuffer()
 }
 
 function modAmp(amount = 0, fold = false) {
+  saveUndoBuffer()
   for (var i = 0; i < buffer.length; i++) {
     let newVal = buffer.getChannelData(0)[i] * (1 + amount / 100)
     if (fold) {
@@ -90,6 +118,7 @@ function modAmp(amount = 0, fold = false) {
 }
 
 function modSmooth(windowSize = 8, start = 0, end = buffer.length) {
+  saveUndoBuffer()
   let clone = []
   for (var i = 0; i < buffer.length; i++) {
     clone[i] = buffer.getChannelData(0)[i]
@@ -111,6 +140,7 @@ function modSmooth(windowSize = 8, start = 0, end = buffer.length) {
 }
 
 function modLoopClean() {
+  saveUndoBuffer()
   const size = 8
   buffer.getChannelData(0)[0] = 0.0
   buffer.getChannelData(0)[buffer.length - 1] = 0.0
@@ -124,7 +154,25 @@ function modLoopClean() {
   drawBuffer()
 }
 
+function modRoughen(amount = 0.3, fold = false) {
+  saveUndoBuffer()
+  for (var i = 0; i < buffer.length; i++) {
+    const roughness = Math.random() * amount - amount / 2
+    let newVal = buffer.getChannelData(0)[i] + roughness
+    if (fold) {
+      newVal = newVal > 1 ? 1 - (newVal - 1) : newVal
+      newVal = newVal < -1 ? -(newVal + 2) : newVal
+    } else {
+      newVal = Math.min(1, Math.max(-1, newVal))
+    }
+
+    buffer.getChannelData(0)[i] = newVal
+  }
+  drawBuffer()
+}
+
 function genSaw() {
+  saveUndoBuffer()
   for (var i = 0; i < buffer.length; i++) {
     buffer.getChannelData(0)[i] = (i / buffer.length) * 2 - 1
   }
@@ -132,6 +180,7 @@ function genSaw() {
 }
 
 function genSquare() {
+  saveUndoBuffer()
   for (var i = 0; i < buffer.length; i++) {
     buffer.getChannelData(0)[i] = i < buffer.length / 2 ? -1 : +1
   }
@@ -139,6 +188,7 @@ function genSquare() {
 }
 
 function genTriangle() {
+  saveUndoBuffer()
   for (var i = 0; i < buffer.length; i++) {
     let val = -1 + (i / buffer.length) * 4
     val = val > 1 ? 1 - (val - 1) : val
@@ -148,6 +198,7 @@ function genTriangle() {
 }
 
 function genNoise() {
+  saveUndoBuffer()
   for (var i = 0; i < buffer.length; i++) {
     buffer.getChannelData(0)[i] = Math.random() * 2 - 1
   }
@@ -155,6 +206,7 @@ function genNoise() {
 }
 
 function genSine() {
+  saveUndoBuffer()
   for (var i = 0; i < buffer.length; i++) {
     buffer.getChannelData(0)[i] = Math.sin((1 * i * Math.PI * 2) / buffer.length)
   }
@@ -162,29 +214,51 @@ function genSine() {
 }
 
 function drawBuffer() {
-  const canvas = document.getElementById('canvas')
-  const ctx = canvas.getContext('2d')
+  const canvasCtx = canvas.getContext('2d')
   const width = canvas.width
   const height = canvas.height
   const data = buffer.getChannelData(0)
 
-  ctx.fillStyle = '#000000'
-  ctx.fillRect(0, 0, width, height)
+  canvasCtx.fillStyle = '#000000'
+  canvasCtx.fillRect(0, 0, width, height)
+  canvasCtx.fillStyle = '#00DD00'
+  canvasCtx.strokeStyle = '#888888'
+  canvasCtx.beginPath()
+  canvasCtx.moveTo(0, height / 2)
+  canvasCtx.lineTo(width, height / 2)
+  canvasCtx.stroke()
 
-  ctx.strokeStyle = '#888888'
-  ctx.beginPath()
-  ctx.moveTo(0, height / 2)
-  ctx.lineTo(width, height / 2)
-  ctx.stroke()
-
-  ctx.strokeStyle = '#00dd00'
-  ctx.lineWidth = 2
-  ctx.beginPath()
+  canvasCtx.strokeStyle = '#00DD00'
+  canvasCtx.lineWidth = 1.0
+  canvasCtx.beginPath()
   for (var i = 0; i < buffer.length; i++) {
     const x = (i * width) / buffer.length
     let y = (1 - (data[i] + 1) / 2) * height
-    ctx.lineTo(x, y)
-    ctx.stroke()
-    ctx.moveTo(x, y)
+    canvasCtx.lineTo(x, y)
+    canvasCtx.stroke()
+    canvasCtx.moveTo(x, y)
   }
+}
+
+function saveUndoBuffer() {
+  let buff = []
+  undoBuffers.push(buff)
+  for (var i = 0; i < buffer.length; i++) {
+    buff[i] = buffer.getChannelData(0)[i]
+  }
+  if (undoBuffers.length > MAX_UNDO) {
+    undoBuffers.shift()
+  }
+}
+
+function undo() {
+  if (undoBuffers.length < 2) {
+    return
+  }
+  let buff = undoBuffers.pop()
+  if (!buff) return
+  for (var i = 0; i < buffer.length; i++) {
+    buffer.getChannelData(0)[i] = buff[i]
+  }
+  drawBuffer()
 }

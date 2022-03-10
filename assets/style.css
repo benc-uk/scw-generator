@@ -73,6 +73,14 @@ select {
   align-items: center;
 }
 
+.wrap {
+  flex-wrap: wrap;
+}
+
+a {
+  color: white;
+}
+
 .col {
   flex-direction: column;
 }
@@ -112,16 +120,11 @@ select {
   width: 25px;
   vertical-align: middle;
 }
-/* 
-label {
-  margin-top: 0.5rem;
-  left: -6rem;
-  top: 1rem;
-} */
 
 .divider {
   width: 3px;
-  background: rgba(0, 0, 0, 0.2);
+  height: 2.5rem;
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .w5 {

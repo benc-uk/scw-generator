@@ -16,22 +16,24 @@ Alpine.data('app', () => ({
   sampleCount: 337,
   drawing: false,
   folding: true,
+  flipBlend: false,
 
   ampAmount: 35,
   roughAmount: 0.3,
   blendAmount: 20,
   smoothSize: 4,
 
-  filterCut: 3000,
+  filterCut: 1000,
   filterQ: 0,
   releaseTime: 2500,
-  attackTime: 10,
-  sustainTime: 200,
+  attackTime: 1,
+  sustainTime: 100,
+  filterEnv: true,
 
   play: audio.play,
   stop: audio.stop,
   playSynth() {
-    audio.playNote(this.attackTime, this.releaseTime, this.sustainTime)
+    audio.playNote(this.attackTime, this.releaseTime, this.sustainTime, this.filterEnv)
   },
 
   save() {
@@ -49,6 +51,7 @@ Alpine.data('app', () => ({
   modMouseDraw,
   modPitch,
   modAmp,
+  modOffset,
   modSmooth,
   modReduce,
   modLoopClean,
@@ -85,37 +88,37 @@ Alpine.data('app', () => ({
 
 Alpine.start()
 
-function modSine(amount, fold) {
+function modSine(amount, fold, inverted = false) {
   saveUndoBuffer()
   let blendBuffer = []
   for (var i = 0; i < buffer.length; i++) {
     blendBuffer[i] = Math.sin((1 * i * Math.PI * 2) / buffer.length)
   }
-  blend(amount, blendBuffer, fold)
+  blend(amount, blendBuffer, fold, inverted)
   drawBuffer()
 }
 
-function modSquare(amount, fold) {
+function modSquare(amount, fold, inverted = false) {
   saveUndoBuffer()
   let blendBuffer = []
   for (var i = 0; i < buffer.length; i++) {
     blendBuffer[i] = i < buffer.length / 2 ? -1 : +1
   }
-  blend(amount, blendBuffer, fold)
+  blend(amount, blendBuffer, fold, inverted)
   drawBuffer()
 }
 
-function modSaw(amount, fold) {
+function modSaw(amount, fold, inverted = false) {
   saveUndoBuffer()
   let blendBuffer = []
   for (var i = 0; i < buffer.length; i++) {
     blendBuffer[i] = (i / buffer.length) * 2 - 1
   }
-  blend(amount, blendBuffer, fold)
+  blend(amount, blendBuffer, fold, inverted)
   drawBuffer()
 }
 
-function modTriangle(amount, fold) {
+function modTriangle(amount, fold, inverted = false) {
   saveUndoBuffer()
   let blendBuffer = []
   for (var i = 0; i < buffer.length; i++) {
@@ -123,11 +126,11 @@ function modTriangle(amount, fold) {
     val = val > 1 ? 1 - (val - 1) : val
     blendBuffer[i] = val
   }
-  blend(amount, blendBuffer, fold)
+  blend(amount, blendBuffer, fold, inverted)
   drawBuffer()
 }
 
-function blend(amount, blendBuffer, fold, inverted = false) {
+function blend(amount, blendBuffer, fold, inverted) {
   for (var i = 0; i < buffer.length; i++) {
     let newVal = inverted ? buffer.getChannelData(0)[i] - blendBuffer[i] * amount : buffer.getChannelData(0)[i] + blendBuffer[i] * amount
     buffer.getChannelData(0)[i] = utils.foldClamp(newVal, fold)
@@ -140,10 +143,13 @@ function modMouseDraw(evt) {
   const x = evt.offsetX / canvas.getBoundingClientRect().width
   const y = evt.offsetY / canvas.getBoundingClientRect().height
   const i = Math.ceil(x * buffer.length)
+  const drawSize = Math.ceil(buffer.length / 150)
+  const newVal = (1 - y) * 2 - 1
 
-  buffer.getChannelData(0)[i - 1] = (1 - y) * 2 - 1
-  buffer.getChannelData(0)[i] = (1 - y) * 2 - 1
-  buffer.getChannelData(0)[i + 1] = (1 - y) * 2 - 1
+  for (let j = 0; j < drawSize; j++) {
+    buffer.getChannelData(0)[i + j] = newVal
+  }
+
   drawBuffer()
 }
 
@@ -164,6 +170,15 @@ function modAmp(amount = 0.3, fold = false) {
   saveUndoBuffer()
   for (var i = 0; i < buffer.length; i++) {
     let newVal = buffer.getChannelData(0)[i] * (1 + amount)
+    newVal = buffer.getChannelData(0)[i] = utils.foldClamp(newVal, fold)
+  }
+  drawBuffer()
+}
+
+function modOffset(amount = 0.3, fold = false) {
+  saveUndoBuffer()
+  for (var i = 0; i < buffer.length; i++) {
+    let newVal = buffer.getChannelData(0)[i] + amount
     newVal = buffer.getChannelData(0)[i] = utils.foldClamp(newVal, fold)
   }
   drawBuffer()

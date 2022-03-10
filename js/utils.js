@@ -90,7 +90,7 @@ export function foldClamp(val, fold = true) {
 }
 
 // Exporting functions
-export function saveWav(arrayBuf) {
+export function saveWav(arrayBuf, name) {
   const blob = bufferToWavBlob(arrayBuf, arrayBuf.length)
-  saveBlob(blob, 'output.wav')
+  saveBlob(blob, `${name}.wav`)
 }

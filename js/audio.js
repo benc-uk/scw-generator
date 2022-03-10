@@ -4,6 +4,7 @@ let source = null
 let oldFilterCut = 0
 let oldFilterQ = 0
 let baseFilterCut = 0
+let playing = false
 
 const MAX_OPEN_FREQ = 22050
 const FILTER_EG = 1200
@@ -26,18 +27,26 @@ export function init(buff, filterCut, filterQ) {
   gain.connect(ctx.destination)
 }
 
-export function play() {
+export function play(volume) {
+  gain.gain.cancelScheduledValues(ctx.currentTime)
+  filter.frequency.cancelScheduledValues(ctx.currentTime)
+
   oldFilterCut = filter.frequency.value
   oldFilterQ = filter.Q.value
   filter.frequency.value = MAX_OPEN_FREQ
   filter.Q.value = 0
 
+  gain.gain.setValueAtTime(volume, ctx.currentTime)
   startAudio()
-  gain.gain.setValueAtTime(1, ctx.currentTime)
+  playing = true
 }
 
-export function playNote(attackTime, releaseTime, sustainTime, filterEnv = true) {
-  if (gain.gain.value == 1) {
+export function setVolume(volume) {
+  gain.gain.setValueAtTime(volume, ctx.currentTime)
+}
+
+export function playNote(noteNum, attackTime, releaseTime, sustainTime, filterEnv = true) {
+  if (playing) {
     stop()
   }
   startAudio()
@@ -46,6 +55,9 @@ export function playNote(attackTime, releaseTime, sustainTime, filterEnv = true)
   const at = attackTime / 1000
   const rt = releaseTime / 1000
   const st = sustainTime / 1000
+
+  // We assume the sample buffer is at C3 (note num 48)
+  source.detune.setValueAtTime((noteNum - 48) * 100, now)
 
   gain.gain.cancelScheduledValues(now)
   gain.gain.setValueAtTime(NEAR_ZERO, now)
@@ -71,6 +83,7 @@ export function stop() {
   filter.frequency.value = oldFilterCut
   filter.Q.value = oldFilterQ
   ctx.suspend()
+  playing = false
 }
 
 export function setFilterParams(filterQ, filterCut) {

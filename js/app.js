@@ -1,7 +1,10 @@
 import * as audio from './audio.js'
 import * as utils from './utils.js'
+import * as midi from './midi.js'
+import { generateName } from './names.js'
+
 import Alpine from 'https://unpkg.com/alpinejs@3.7.0/dist/module.esm.js'
-const VERSION = '0.0.4'
+const VERSION = '0.0.5'
 const MAX_UNDO = 30
 
 let buffer = null
@@ -17,27 +20,32 @@ Alpine.data('app', () => ({
   drawing: false,
   folding: true,
   flipBlend: false,
+  midiDevice: {},
 
   ampAmount: 35,
   roughAmount: 0.3,
   blendAmount: 20,
   smoothSize: 4,
 
+  mainVol: 70,
   filterCut: 1000,
   filterQ: 0,
   releaseTime: 2500,
   attackTime: 1,
   sustainTime: 100,
   filterEnv: true,
+  noteNum: 48,
 
-  play: audio.play,
+  play() {
+    audio.play(this.mainVol / 100)
+  },
   stop: audio.stop,
   playSynth() {
-    audio.playNote(this.attackTime, this.releaseTime, this.sustainTime, this.filterEnv)
+    audio.playNote(this.noteNum, this.attackTime, this.releaseTime, this.sustainTime, this.filterEnv)
   },
 
   save() {
-    utils.saveWav(buffer)
+    utils.saveWav(buffer, generateName())
   },
   saveUndoBuffer,
   undo,
@@ -61,7 +69,7 @@ Alpine.data('app', () => ({
   modSquare,
   modTriangle,
 
-  init() {
+  async init() {
     ctx = new AudioContext()
     canvas = document.getElementById('canvas')
 
@@ -82,6 +90,23 @@ Alpine.data('app', () => ({
     })
     this.$watch('filterQ', () => {
       audio.setFilterParams(this.filterQ, this.filterCut)
+    })
+    this.$watch('mainVol', () => {
+      audio.setVolume(this.mainVol / 100)
+    })
+
+    // Really simple MIDI
+    midi.getAccess().then((access) => {
+      if (!access) return
+      this.midiDevice = access.inputs.values().next().value
+      if (!this.midiDevice) return
+      console.log('Using MIDI device', this.midiDevice.name)
+      // Listen for note on messages from all channels
+      this.midiDevice.onmidimessage = (e) => {
+        if (e.data[0] == 148) {
+          audio.playNote(e.data[1], this.attackTime, this.releaseTime, this.sustainTime, this.filterEnv)
+        }
+      }
     })
   },
 }))

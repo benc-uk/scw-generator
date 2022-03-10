@@ -35,7 +35,7 @@
         <div class="tab" :class="tab == 'simple' || 'tab-nosel'" @click="tab = 'simple'">SIMPLE</div>
         <div class="tab" :class="tab == 'synth' || 'tab-nosel'" @click="tab = 'synth'">SYNTH</div>
         <div class="push flex gap">
-          <div x-html="`<a href='https://github.com/benc-uk/scw-generator'>v${version}</a><br>Device: ${sampleRate} Hz`"></div>
+          <div x-html="`<a href='https://github.com/benc-uk/scw-generator'>v${version}</a><br>Devices: ${midiDevice ? midiDevice.name+' | ' : ''} ${sampleRate} Hz`"></div>
           <button class="pure-button" @click="folding = !folding">FOLDING <i class="fas fa-fw" :class="folding ? 'fa-check-square green' : 'fa-times-circle red'"></i></button>
           <button class="pure-button" @click="undo()">UNDO <i class="fas fa-undo fa-fw"></i></button>
           <button class="pure-button" @click="save()">EXPORT <i class="fas fa-download fa-fw"></i></button>
@@ -45,6 +45,10 @@
       <div class="nav2 flex gap" id="simpleTab" x-show="tab == 'simple'">
         <button class="pure-button w7" @click="play()">PLAY <i class="fas fa-play fa-fw"></i></button>
         <button class="pure-button w7" @click="stop()">STOP <i class="fas fa-stop fa-fw"></i></button>
+        <div class="flex col m-r-10">
+          <input type="range" min="0" max="100" x-model.number="mainVol" />
+          <span>Volume</span>
+        </div>
       </div>
 
       <div class="nav2 flex" id="synthTab" x-show="tab == 'synth'">

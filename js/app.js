@@ -1,7 +1,7 @@
 import * as audio from './audio.js'
 import * as utils from './utils.js'
 import Alpine from 'https://unpkg.com/alpinejs@3.7.0/dist/module.esm.js'
-const VERSION = '0.0.3'
+const VERSION = '0.0.4'
 const MAX_UNDO = 30
 
 let buffer = null
@@ -18,14 +18,15 @@ Alpine.data('app', () => ({
   folding: true,
 
   ampAmount: 35,
-  roughAmount: 0.1,
+  roughAmount: 0.3,
+  blendAmount: 20,
   smoothSize: 4,
 
   filterCut: 3000,
   filterQ: 0,
-  releaseTime: 800,
-  attackTime: 100,
-  sustainTime: 500,
+  releaseTime: 2500,
+  attackTime: 10,
+  sustainTime: 200,
 
   play: audio.play,
   stop: audio.stop,
@@ -49,8 +50,13 @@ Alpine.data('app', () => ({
   modPitch,
   modAmp,
   modSmooth,
+  modReduce,
   modLoopClean,
   modRoughen,
+  modSine,
+  modSaw,
+  modSquare,
+  modTriangle,
 
   init() {
     ctx = new AudioContext()
@@ -64,6 +70,7 @@ Alpine.data('app', () => ({
     this.$watch('sampleCount', () => {
       audio.stop()
       buffer = ctx.createBuffer(1, this.sampleCount, ctx.sampleRate)
+      audio.init(buffer, this.filterCut, this.filterQ)
       this.genSaw()
     })
 
@@ -78,12 +85,63 @@ Alpine.data('app', () => ({
 
 Alpine.start()
 
+function modSine(amount, fold) {
+  saveUndoBuffer()
+  let blendBuffer = []
+  for (var i = 0; i < buffer.length; i++) {
+    blendBuffer[i] = Math.sin((1 * i * Math.PI * 2) / buffer.length)
+  }
+  blend(amount, blendBuffer, fold)
+  drawBuffer()
+}
+
+function modSquare(amount, fold) {
+  saveUndoBuffer()
+  let blendBuffer = []
+  for (var i = 0; i < buffer.length; i++) {
+    blendBuffer[i] = i < buffer.length / 2 ? -1 : +1
+  }
+  blend(amount, blendBuffer, fold)
+  drawBuffer()
+}
+
+function modSaw(amount, fold) {
+  saveUndoBuffer()
+  let blendBuffer = []
+  for (var i = 0; i < buffer.length; i++) {
+    blendBuffer[i] = (i / buffer.length) * 2 - 1
+  }
+  blend(amount, blendBuffer, fold)
+  drawBuffer()
+}
+
+function modTriangle(amount, fold) {
+  saveUndoBuffer()
+  let blendBuffer = []
+  for (var i = 0; i < buffer.length; i++) {
+    let val = -1 + (i / buffer.length) * 4
+    val = val > 1 ? 1 - (val - 1) : val
+    blendBuffer[i] = val
+  }
+  blend(amount, blendBuffer, fold)
+  drawBuffer()
+}
+
+function blend(amount, blendBuffer, fold, inverted = false) {
+  for (var i = 0; i < buffer.length; i++) {
+    let newVal = inverted ? buffer.getChannelData(0)[i] - blendBuffer[i] * amount : buffer.getChannelData(0)[i] + blendBuffer[i] * amount
+    buffer.getChannelData(0)[i] = utils.foldClamp(newVal, fold)
+  }
+}
+
 function modMouseDraw(evt) {
   if (!this.drawing) return
 
   const x = evt.offsetX / canvas.getBoundingClientRect().width
   const y = evt.offsetY / canvas.getBoundingClientRect().height
   const i = Math.ceil(x * buffer.length)
+
+  buffer.getChannelData(0)[i - 1] = (1 - y) * 2 - 1
   buffer.getChannelData(0)[i] = (1 - y) * 2 - 1
   buffer.getChannelData(0)[i + 1] = (1 - y) * 2 - 1
   drawBuffer()
@@ -102,17 +160,11 @@ function modPitch(freq) {
   drawBuffer()
 }
 
-function modAmp(amount = 0, fold = false) {
+function modAmp(amount = 0.3, fold = false) {
   saveUndoBuffer()
   for (var i = 0; i < buffer.length; i++) {
-    let newVal = buffer.getChannelData(0)[i] * (1 + amount / 100)
-    if (fold) {
-      newVal = newVal > 1 ? 1 - (newVal - 1) : newVal
-      newVal = newVal < -1 ? -(newVal + 2) : newVal
-    } else {
-      newVal = Math.min(1, Math.max(-1, newVal))
-    }
-    buffer.getChannelData(0)[i] = newVal
+    let newVal = buffer.getChannelData(0)[i] * (1 + amount)
+    newVal = buffer.getChannelData(0)[i] = utils.foldClamp(newVal, fold)
   }
   drawBuffer()
 }
@@ -139,6 +191,20 @@ function modSmooth(windowSize = 8, start = 0, end = buffer.length) {
   drawBuffer()
 }
 
+function modReduce(windowSize = 8) {
+  saveUndoBuffer()
+  for (var i = 0; i < buffer.length; i += windowSize) {
+    let val = buffer.getChannelData(0)[i]
+    for (var j = 0; j < windowSize; j++) {
+      if (j + i < 0 || j + i >= buffer.length) {
+        continue
+      }
+      buffer.getChannelData(0)[(i + j) % buffer.length] = val
+    }
+  }
+  drawBuffer()
+}
+
 function modLoopClean() {
   saveUndoBuffer()
   const size = 8
@@ -159,14 +225,7 @@ function modRoughen(amount = 0.3, fold = false) {
   for (var i = 0; i < buffer.length; i++) {
     const roughness = Math.random() * amount - amount / 2
     let newVal = buffer.getChannelData(0)[i] + roughness
-    if (fold) {
-      newVal = newVal > 1 ? 1 - (newVal - 1) : newVal
-      newVal = newVal < -1 ? -(newVal + 2) : newVal
-    } else {
-      newVal = Math.min(1, Math.max(-1, newVal))
-    }
-
-    buffer.getChannelData(0)[i] = newVal
+    buffer.getChannelData(0)[i] = utils.foldClamp(newVal, fold)
   }
   drawBuffer()
 }

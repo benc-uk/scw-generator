@@ -3,6 +3,10 @@
   padding: 2rem;
 }
 
+.center {
+  text-align: center;
+}
+
 main {
   padding: 0rem;
   margin: 0rem;
@@ -17,12 +21,13 @@ canvas {
   background-color: #222;
   width: 100%;
   border: 0.5rem solid #555;
+  cursor: crosshair;
 }
 
 select {
   font-size: 1.5rem;
   vertical-align: middle;
-  border-radius: 15px;
+  border-radius: 6px;
   margin: 0.6rem;
 }
 
@@ -65,35 +70,22 @@ select {
 
 .flex {
   display: flex;
+  align-items: center;
 }
+
+.col {
+  flex-direction: column;
+}
+
 .gap {
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
-.button-secondary {
-  color: white;
-  border-radius: 4px;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+.btn-mod {
+  background: var(--slate-400);
 }
-
-.button-success {
-  background: rgb(28, 184, 65);
-  /* this is a green */
-}
-
-.button-error {
-  background: rgb(202, 60, 60);
-  /* this is a maroon */
-}
-
-.button-warning {
-  background: rgb(223, 117, 20);
-  /* this is an orange */
-}
-
-.button-secondary {
-  background: rgb(66, 184, 221);
-  /* this is a light blue */
+.btn-blend {
+  background: var(--teal-500);
 }
 
 .tab {
@@ -120,16 +112,38 @@ select {
   width: 25px;
   vertical-align: middle;
 }
-
+/* 
 label {
   margin-top: 0.5rem;
-}
+  left: -6rem;
+  top: 1rem;
+} */
 
 .divider {
   width: 3px;
   background: rgba(0, 0, 0, 0.2);
 }
 
+.w5 {
+  width: 5rem;
+}
+
+.w6 {
+  width: 6rem;
+}
+
 .w7 {
   width: 7rem;
+}
+
+.w8 {
+  width: 8rem;
+}
+
+.green {
+  color: var(--green-600);
+}
+
+.red {
+  color: var(--red-500);
 }

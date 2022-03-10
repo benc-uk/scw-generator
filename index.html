@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 
     <link rel="stylesheet" href="assets/colors.css" />
+    <link rel="stylesheet" href="assets/switch.css" />
     <link rel="stylesheet" href="assets/style.css" />
 
     <script src="./js/app.js" type="module"></script>
@@ -33,33 +34,34 @@
         <div class="tab" :class="tab == 'simple' || 'tab-nosel'" @click="tab = 'simple'">SIMPLE</div>
         <div class="tab" :class="tab == 'synth' || 'tab-nosel'" @click="tab = 'synth'">SYNTH</div>
         <div class="push flex gap">
-          <div x-html="`v${version} ${folding} - Audio device rate<br>${sampleRate} Hz`"></div>
-          <button class="pure-button" @click="folding=!folding" :class="folding && 'button-success'">FOLDING <i class="fa-solid fa-signature fa-fw"></i></button>
-          <button class="pure-button" @click="undo()">UNDO <i class="fa-solid fa-undo fa-fw"></i></button>
-          <button class="pure-button" @click="save()">EXPORT <i class="fa-solid fa-download fa-fw"></i></button>
+          <div x-html="`v${version}<br>${sampleRate} Hz`"></div>
+          <button class="pure-button" @click="folding = !folding">FOLDING <i class="fas fa-fw" :class="folding ? 'fa-check-square green' : 'fa-times-circle red'"></i></button>
+          <button class="pure-button" @click="undo()">UNDO <i class="fas fa-undo fa-fw"></i></button>
+          <button class="pure-button" @click="save()">EXPORT <i class="fas fa-download fa-fw"></i></button>
         </div>
       </div>
 
       <div class="nav2 flex gap" id="simpleTab" x-show="tab == 'simple'">
-        <button class="pure-button" @click="play()">PLAY <i class="fa-solid fa-play fa-fw"></i></button>
-        <button class="pure-button" @click="stop()">STOP <i class="fa-solid fa-stop fa-fw"></i></button>
+        <button class="pure-button w7" @click="play()">PLAY <i class="fas fa-play fa-fw"></i></button>
+        <button class="pure-button w7" @click="stop()">STOP <i class="fas fa-stop fa-fw"></i></button>
       </div>
 
-      <div class="nav2 flex gap" id="synthTab" x-show="tab == 'synth'">
-        <button class="pure-button" @click="playSynth()">NOTE <i class="fa-solid fa-music fa-fw"></i></button>
+      <div class="nav2 flex" id="synthTab" x-show="tab == 'synth'">
+        <button class="pure-button" @click="playSynth()">NOTE <i class="fas fa-music fa-fw"></i></button>
         <div class="label">Envelope</div>
         <input id="attackTime" type="range" min="10" max="3000" x-model="attackTime" />
         <label for="attackTime">Attack</label>
-        <input id="sustainTime" type="range" min="10" max="3000" x-model="sustainTime" />
+        <input id="sustainTime" type="range" min="10" max="2000" x-model="sustainTime" />
         <label for="sustainTime">Sustain</label>
-        <input id="releaseTime" type="range" min="10" max="3000" x-model="releaseTime" />
+        <input id="releaseTime" type="range" min="10" max="6000" x-model="releaseTime" />
         <label for="releaseTime">Release</label>
 
+        <div class="divider"></div>
         <div class="label">Filter</div>
-        <input id="filterCut" type="range" min="50" max="4000" x-model="filterCut" />
+        <input id="filterCut" type="range" min="2" max="4000" x-model.number="filterCut" />
         <label for="filterCut">Cut</label>
         &nbsp;&nbsp;
-        <input id="filterQ" type="range" min="0" max="20" x-model="filterQ" />
+        <input id="filterQ" type="range" min="0" max="20" x-model.number="filterQ" />
         <label for="filterQ">Res</label>
       </div>
 
@@ -68,7 +70,7 @@
       </div>
 
       <div class="tools flex gap">
-        <div class="label">Generators:</div>
+        <div class="label w7">Generators:</div>
         <button class="w7 pure-button pure-button-primary" @click="genSaw()">SAW</button>
         <button class="w7 pure-button pure-button-primary" @click="genSquare()">SQUARE</button>
         <button class="w7 pure-button pure-button-primary" @click="genTriangle()">TRIANGLE</button>
@@ -77,31 +79,54 @@
       </div>
 
       <div class="tools flex gap">
-        <div class="label">Modifiers:</div>
-        <button class="pure-button button-success" @click="modPitch(2)">DOUBLE <i class="fa-fw fa-solid fa-angles-left"></i></button>
-        <button class="pure-button button-success" @click="modLoopClean()">CLEAN LOOP <i class="fa-fw fa-solid fa-repeat"></i></button>
+        <div class="label w7">Modifiers:</div>
+        <button class="pure-button btn-mod" @click="modPitch(2)">DOUBLE <i class="fa-fw fas fa-angles-left"></i></button>
+        <button class="pure-button btn-mod" @click="modLoopClean()">LOOP <i class="fa-fw fas fa-repeat"></i></button>
         <div class="divider"></div>
-        <button class="pure-button button-success" @click="modSmooth(smoothSize)">SMOOTH <i class="fa-fw fa-solid fa-bezier-curve"></i></button>
-        <select x-model="smoothSize">
-          <option value="2">Size: 2</option>
-          <option value="4">Size: 4</option>
-          <option value="8">Size: 8</option>
-          <option value="12">Size: 12</option>
-          <option value="16">Size: 16</option>
+        <button class="pure-button btn-mod" @click="modReduce(smoothSize)">REDUCE <i class="fa-fw fab fa-deezer"></i></button>
+        <button class="pure-button btn-mod" @click="modSmooth(smoothSize)">SMOOTH <i class="fa-fw fas fa-bacon"></i></button>
+        <select x-model.number="smoothSize">
+          <option value="2">2</option>
+          <option value="4">4</option>
+          <option value="8">8</option>
+          <option value="12">12</option>
+          <option value="16">16</option>
+          <option value="16">24</option>
         </select>
         <div class="divider"></div>
-        <button class="pure-button button-success" @click="modRoughen(roughAmount, folding)">ROUGHEN <i class="fa-fw fa-solid fa-dice"></i></button>
-        <select x-model="roughAmount">
+        <button class="pure-button btn-mod" @click="modRoughen(roughAmount, folding)">ROUGH <i class="fa-fw fa-rotate-180 fas fa-icicles"></i></button>
+        <select x-model.number="roughAmount">
           <option value="0.05">0.05</option>
           <option value="0.1">0.1</option>
           <option value="0.3">0.3</option>
           <option value="0.5">0.5</option>
         </select>
         <div class="divider"></div>
-        <button class="pure-button button-success" @click="modAmp(ampAmount, folding)">AMP <i class="fa-fw fa-rotate-90 fa-solid fa-arrow-right-arrow-left"></i></button>
+        <button class="pure-button btn-mod" @click="modOffset(ampAmount/100, folding)">OFFSET <i class="fa-fw fa-rotate-90 fas fa-arrow-right-arrow-left"></i></button>
+        <button class="pure-button btn-mod" @click="modAmp(ampAmount/100, folding)">AMP <i class="fa-fw fas fa-bullhorn"></i></button>
 
         <input id="amount" type="range" min="-200" max="200" x-model="ampAmount" />
-        <label for="amount">Amp amount</label>
+        <label for="amount" x-html="'<br>'+ampAmount"></label>
+      </div>
+
+      <div class="tools flex gap">
+        <div class="label w7">Warp:</div>
+        <button class="pure-button btn-blend w7" @click="modSaw(blendAmount/100, folding)">SAW</button>
+        <button class="pure-button btn-blend w7" @click="modSquare(blendAmount/100, folding)">SQUARE</button>
+        <button class="pure-button btn-blend w7" @click="modTriangle(blendAmount/100, folding)">TRIANGLE</button>
+        <button class="pure-button btn-blend w7" @click="modSine(blendAmount/100, folding)">SINE</button>
+
+        <div class="flex col center" style="position: relative">
+          <label class="switch">
+            <input type="checkbox" />
+            <span class="slider"></span>
+          </label>
+          <span style="position: absolute; top: 8px; pointer-events: none">FLIP</span>
+        </div>
+
+        <div class="flex col center">
+          <input id="blendAmount" type="range" min="0" max="100" x-model="blendAmount" />
+        </div>
       </div>
     </main>
   </body>

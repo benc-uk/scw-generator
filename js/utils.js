@@ -79,12 +79,18 @@ export function cloneBuffer(buffer) {
   return clone
 }
 
+export function foldClamp(val, fold = true) {
+  if (fold) {
+    if (val > 1) return 1 - (val - 1)
+    if (val < -1) return -(val + 2)
+  } else {
+    return Math.min(1, Math.max(-1, val))
+  }
+  return val
+}
+
 // Exporting functions
 export function saveWav(arrayBuf) {
   const blob = bufferToWavBlob(arrayBuf, arrayBuf.length)
   saveBlob(blob, 'output.wav')
-}
-
-function avg(v) {
-  return v.reduce((a, b) => a + b, 0) / v.length
 }

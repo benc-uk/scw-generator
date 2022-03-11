@@ -21,7 +21,7 @@
   <body>
     <main x-data="app" @keyup.ctrl.z.window="undo()">
       <div class="nav1 flex">
-        <select class="pure-input-1-2" x-model="sampleCount">
+        <select class="pure-input-1-2" x-model="buffSize">
           <option disabled>Buffer Size</option>
           <option>200</option>
           <option>225</option>
@@ -44,7 +44,7 @@
             <span>FOLD</span>
           </div>
           <button class="pure-button" @click="undo()">UNDO <i class="fas fa-undo fa-fw"></i></button>
-          <button class="pure-button" @click="save()">EXPORT <i class="fas fa-download fa-fw"></i></button>
+          <button class="pure-button" @click="exportWav()">EXPORT <i class="fas fa-download fa-fw"></i></button>
         </div>
       </div>
 
@@ -100,7 +100,7 @@
       </div>
 
       <div id="center">
-        <canvas id="canvas" width="1200" height="400" @mousemove="modMouseDraw($event)" @mousedown="drawing=true; saveUndoBuffer()" @mouseup="drawing=false" @mouseleave="drawing=false"> </canvas>
+        <canvas id="canvas" width="1200" height="400" @mousemove="mouseDraw($event)" @mousedown="drawing=true; saveUndoBuffer()" @mouseup="drawing=false" @mouseleave="drawing=false"> </canvas>
       </div>
 
       <div class="tools flex gap wrap">
@@ -117,9 +117,9 @@
         <button class="pure-button btn-mod" @click="modPitch(2)">DOUBLE <i class="fa-fw fas fa-angles-left"></i></button>
         <button class="pure-button btn-mod" @click="modLoopClean()">LOOP <i class="fa-fw fas fa-repeat"></i></button>
         <div class="divider"></div>
-        <button class="pure-button btn-mod" @click="modReduce(smoothSize)">REDUCE <i class="fa-fw fab fa-deezer"></i></button>
-        <button class="pure-button btn-mod" @click="modSmooth(smoothSize)">SMOOTH <i class="fa-fw fas fa-bacon"></i></button>
-        <select x-model.number="smoothSize">
+        <button class="pure-button btn-mod" @click="modReduce()">REDUCE <i class="fa-fw fab fa-deezer"></i></button>
+        <button class="pure-button btn-mod" @click="modSmooth(0, buffSize)">SMOOTH <i class="fa-fw fas fa-bacon"></i></button>
+        <select x-model.number="smoothReduceSize">
           <option value="2">2</option>
           <option value="4">4</option>
           <option value="8">8</option>
@@ -128,7 +128,7 @@
           <option value="16">24</option>
         </select>
         <div class="divider"></div>
-        <button class="pure-button btn-mod" @click="modRoughen(roughAmount, folding)">ROUGH <i class="fa-fw fa-rotate-180 fas fa-icicles"></i></button>
+        <button class="pure-button btn-mod" @click="modRoughen()">ROUGH <i class="fa-fw fa-rotate-180 fas fa-icicles"></i></button>
         <select x-model.number="roughAmount">
           <option value="0.05">0.05</option>
           <option value="0.1">0.1</option>
@@ -137,8 +137,8 @@
         </select>
         <div class="divider"></div>
         <div class="flex gap">
-          <button class="pure-button btn-mod" @click="modOffset(ampAmount/100, folding)">OFFSET <i class="fa-fw fa-rotate-90 fas fa-arrow-right-arrow-left"></i></button>
-          <button class="pure-button btn-mod" @click="modAmp(ampAmount/100, folding)">AMP <i class="fa-fw fas fa-bullhorn"></i></button>
+          <button class="pure-button btn-mod" @click="modOffset()">OFFSET <i class="fa-fw fa-rotate-90 fas fa-arrow-right-arrow-left"></i></button>
+          <button class="pure-button btn-mod" @click="modAmp()">AMP <i class="fa-fw fas fa-bullhorn"></i></button>
 
           <div class="flex col center">
             <input id="amount" type="range" min="-100" max="100" x-model="ampAmount" />
@@ -149,10 +149,10 @@
 
       <div class="tools flex gap wrap">
         <div class="label w7">Warp:</div>
-        <button class="pure-button btn-blend w7" @click="modSaw(blendAmount/100, folding, flipBlend)">SAW</button>
-        <button class="pure-button btn-blend w7" @click="modSquare(blendAmount/100, folding, flipBlend)">SQUARE</button>
-        <button class="pure-button btn-blend w7" @click="modTriangle(blendAmount/100, folding, flipBlend)">TRIANGLE</button>
-        <button class="pure-button btn-blend w7" @click="modSine(blendAmount/100, folding, flipBlend)">SINE</button>
+        <button class="pure-button btn-blend w7" @click="modSaw()">SAW</button>
+        <button class="pure-button btn-blend w7" @click="modSquare()">SQUARE</button>
+        <button class="pure-button btn-blend w7" @click="modTriangle()">TRIANGLE</button>
+        <button class="pure-button btn-blend w7" @click="modSine()">SINE</button>
 
         <div class="flex col center" style="position: relative">
           <label class="switch">

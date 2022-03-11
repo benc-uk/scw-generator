@@ -89,8 +89,14 @@ export function foldClamp(val, fold = true) {
   return val
 }
 
-// Exporting functions
 export function saveWav(arrayBuf, name) {
   const blob = bufferToWavBlob(arrayBuf, arrayBuf.length)
   saveBlob(blob, `${name}.wav`)
+}
+
+export function blend(buffer, amount, blendBuffer, fold, inverted) {
+  for (var i = 0; i < buffer.length; i++) {
+    let newVal = inverted ? buffer.getChannelData(0)[i] - blendBuffer[i] * amount : buffer.getChannelData(0)[i] + blendBuffer[i] * amount
+    buffer.getChannelData(0)[i] = foldClamp(newVal, fold)
+  }
 }

@@ -6,7 +6,7 @@ let access
 export async function getAccess(stateChangeCallback) {
   if (!navigator.requestMIDIAccess) {
     console.error('No MIDI support, try using HTTPS and a browser that supports WebMIDI API')
-    return
+    return null
   }
 
   try {
@@ -31,13 +31,4 @@ export function getInputDevices() {
     return null
   }
   return access.inputs
-}
-
-// =================================================================================
-// Split a byte into two nibbles
-// =================================================================================
-export function byteToNibbles(byte) {
-  const high = byte & 0xf
-  const low = byte >> 4
-  return [low, high]
 }

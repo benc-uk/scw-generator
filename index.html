@@ -35,7 +35,7 @@
         <div class="tab" :class="tab == 'simple' || 'tab-nosel'" @click="tab = 'simple'">SIMPLE</div>
         <div class="tab" :class="tab == 'synth' || 'tab-nosel'" @click="tab = 'synth'">SYNTH</div>
         <div class="push flex gap">
-          <div x-html="`<a href='https://github.com/benc-uk/scw-generator'>v${version}</a><br>Devices: ${midiDevice ? midiDevice.name+' | ' : ''} ${sampleRate} Hz`"></div>
+          <div x-html="`<a href='https://github.com/benc-uk/scw-generator'>v${version}</a><br>MIDI: ${midiDevice.name?midiDevice.name:'No MIDI'} &nbsp; | &nbsp; Audio: ${sampleRate} Hz`"></div>
           <button class="pure-button" @click="folding = !folding">FOLDING <i class="fas fa-fw" :class="folding ? 'fa-check-square green' : 'fa-times-circle red'"></i></button>
           <button class="pure-button" @click="undo()">UNDO <i class="fas fa-undo fa-fw"></i></button>
           <button class="pure-button" @click="save()">EXPORT <i class="fas fa-download fa-fw"></i></button>

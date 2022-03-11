@@ -95,12 +95,12 @@ Alpine.data('app', () => ({
       audio.setVolume(this.mainVol / 100)
     })
 
-    // Really simple MIDI
+    // Really simple MIDI support
     midi.getAccess().then((access) => {
       if (!access) return
       this.midiDevice = access.inputs.values().next().value
       if (!this.midiDevice) return
-      console.log('Using MIDI device', this.midiDevice.name)
+      console.log(`Found MIDI! Using device: ${this.midiDevice.name}`)
       // Listen for note on messages from all channels
       this.midiDevice.onmidimessage = (e) => {
         if (e.data[0] == 148) {

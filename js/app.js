@@ -4,7 +4,7 @@ import * as midi from './midi.js'
 import { generateName } from './names.js'
 
 import Alpine from 'https://unpkg.com/alpinejs@3.7.0/dist/module.esm.js'
-const VERSION = '0.0.5'
+const VERSION = '0.0.6'
 const MAX_UNDO = 30
 
 let buffer = null
@@ -20,7 +20,7 @@ Alpine.data('app', () => ({
   drawing: false,
   folding: true,
   flipBlend: false,
-  midiDevice: {},
+  midiDevice: null,
 
   ampAmount: 35,
   roughAmount: 0.3,
@@ -28,12 +28,13 @@ Alpine.data('app', () => ({
   smoothSize: 4,
 
   mainVol: 70,
-  filterCut: 1000,
-  filterQ: 0,
+  filterCut: 700,
+  filterQ: 6,
   releaseTime: 2500,
   attackTime: 1,
   sustainTime: 100,
   filterEnv: true,
+  reverb: true,
   noteNum: 48,
 
   play() {
@@ -41,7 +42,7 @@ Alpine.data('app', () => ({
   },
   stop: audio.stop,
   playSynth() {
-    audio.playNote(this.noteNum, this.attackTime, this.releaseTime, this.sustainTime, this.filterEnv)
+    audio.playNote(this.noteNum, this.attackTime, this.releaseTime, this.sustainTime, this.filterEnv, this.reverb)
   },
 
   save() {
@@ -103,7 +104,7 @@ Alpine.data('app', () => ({
       console.log(`Found MIDI! Using device: ${this.midiDevice.name}`)
       // Listen for note on messages from all channels
       this.midiDevice.onmidimessage = (e) => {
-        if (e.data[0] == 148) {
+        if (e.data[0] == 148 && e.data[2] > 0) {
           audio.playNote(e.data[1], this.attackTime, this.releaseTime, this.sustainTime, this.filterEnv)
         }
       }

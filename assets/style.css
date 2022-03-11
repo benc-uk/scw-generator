@@ -150,3 +150,7 @@ a {
 .red {
   color: var(--red-500);
 }
+
+.pos-relative {
+  position: relative;
+}

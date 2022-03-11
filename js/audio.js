@@ -1,70 +1,89 @@
 let filter = null
-let gain = null
+let synthGain = null
+let basicGain = null
 let source = null
-let oldFilterCut = 0
-let oldFilterQ = 0
+let synthWet = null
+let synthDry = null
 let baseFilterCut = 0
 let playing = false
 
-const MAX_OPEN_FREQ = 22050
+const ctx = new AudioContext()
 const FILTER_EG = 1200
 const NEAR_ZERO = 0.00000001
-const ctx = new AudioContext()
+const REVERB_WETDRY = 0.4
 
-export function init(buff, filterCut, filterQ) {
+export async function init(buff, filterCut, filterQ) {
   filter = ctx.createBiquadFilter()
-  gain = ctx.createGain()
+  synthGain = ctx.createGain()
+  basicGain = ctx.createGain()
   filter.Q.value = filterQ
   filter.frequency.value = filterCut
   baseFilterCut = filterCut
 
+  // load impulse response from file
+  const reverb = ctx.createConvolver()
+  const verbResp = await fetch('assets/reverb.wav')
+  const verbBuffer = await verbResp.arrayBuffer()
+  reverb.buffer = await ctx.decodeAudioData(verbBuffer)
+
   source = ctx.createBufferSource()
   source.buffer = buff
   source.loop = true
-  gain.gain.value = 0
-  source.connect(filter)
-  filter.connect(gain)
-  gain.connect(ctx.destination)
+  synthGain.gain.value = 0
+  basicGain.gain.value = 0
+  source.connect(synthGain)
+  source.connect(basicGain)
+  synthGain.connect(filter)
+  basicGain.connect(ctx.destination)
+
+  synthDry = ctx.createGain()
+  synthDry.connect(ctx.destination)
+  synthWet = ctx.createGain()
+  synthWet.connect(ctx.destination)
+  synthWet.gain.value = 0
+  synthDry.gain.value = 1
+  filter.connect(synthDry)
+  filter.connect(reverb)
+  reverb.connect(synthWet)
 }
 
 export function play(volume) {
-  gain.gain.cancelScheduledValues(ctx.currentTime)
-  filter.frequency.cancelScheduledValues(ctx.currentTime)
-
-  oldFilterCut = filter.frequency.value
-  oldFilterQ = filter.Q.value
-  filter.frequency.value = MAX_OPEN_FREQ
-  filter.Q.value = 0
-
-  gain.gain.setValueAtTime(volume, ctx.currentTime)
+  basicGain.gain.setValueAtTime(volume, ctx.currentTime)
   startAudio()
   playing = true
 }
 
 export function setVolume(volume) {
-  gain.gain.setValueAtTime(volume, ctx.currentTime)
+  basicGain.gain.setValueAtTime(volume, ctx.currentTime)
 }
 
-export function playNote(noteNum, attackTime, releaseTime, sustainTime, filterEnv = true) {
+export function playNote(noteNum, attackTime, releaseTime, sustainTime, filterEnv = true, reverb = true) {
   if (playing) {
     stop()
   }
   startAudio()
   const now = ctx.currentTime
-
   const at = attackTime / 1000
   const rt = releaseTime / 1000
   const st = sustainTime / 1000
 
+  if (reverb) {
+    synthWet.gain.value = REVERB_WETDRY
+    synthDry.gain.value = 0.99 - REVERB_WETDRY
+  } else {
+    synthWet.gain.value = 0
+    synthDry.gain.value = 0.99
+  }
+
   // We assume the sample buffer is at C3 (note num 48)
   source.detune.setValueAtTime((noteNum - 48) * 100, now)
 
-  gain.gain.cancelScheduledValues(now)
-  gain.gain.setValueAtTime(NEAR_ZERO, now)
-  gain.gain.linearRampToValueAtTime(1, now + at)
-  gain.gain.setValueAtTime(1, now + at + st)
-  gain.gain.exponentialRampToValueAtTime(NEAR_ZERO, now + at + rt + st)
-  gain.gain.setValueAtTime(0, now + at + rt + st + 0.0001)
+  synthGain.gain.cancelScheduledValues(now)
+  synthGain.gain.setValueAtTime(NEAR_ZERO, now)
+  synthGain.gain.linearRampToValueAtTime(1, now + at)
+  synthGain.gain.setValueAtTime(1, now + at + st)
+  synthGain.gain.exponentialRampToValueAtTime(NEAR_ZERO, now + at + rt + st)
+  synthGain.gain.setValueAtTime(0, now + at + rt + st + 0.0001)
 
   if (filterEnv) {
     const cutoffStart = baseFilterCut
@@ -79,9 +98,7 @@ export function playNote(noteNum, attackTime, releaseTime, sustainTime, filterEn
 }
 
 export function stop() {
-  gain.gain.setValueAtTime(0, ctx.currentTime)
-  filter.frequency.value = oldFilterCut
-  filter.Q.value = oldFilterQ
+  basicGain.gain.setValueAtTime(0, ctx.currentTime)
   ctx.suspend()
   playing = false
 }

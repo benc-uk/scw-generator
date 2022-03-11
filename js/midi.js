@@ -4,6 +4,11 @@ let access
 // Attempt to get MIDI access and hold it globally
 // ===============================================================================
 export async function getAccess(stateChangeCallback) {
+  if (!navigator.requestMIDIAccess) {
+    console.error('No MIDI support, try using HTTPS and a browser that supports WebMIDI API')
+    return
+  }
+
   try {
     if (!access) {
       access = await navigator.requestMIDIAccess()

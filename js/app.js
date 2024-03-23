@@ -39,11 +39,11 @@ Alpine.data('app', () => ({
 
   async init() {
     ctx = new AudioContext()
+    this.sampleRate = ctx.sampleRate
     canvas = document.getElementById('canvas')
 
     this.buffer = ctx.createBuffer(1, this.buffSize, ctx.sampleRate)
     audio.init(this.buffer, this.filterCut, this.filterQ)
-    this.sampleRate = ctx.sampleRate
     this.genSaw()
 
     this.$watch('buffSize', () => {
@@ -78,6 +78,19 @@ Alpine.data('app', () => ({
     })
   },
 
+  // test() {
+  //   const count = 120
+  //   const bigBuffer = ctx.createBuffer(1, this.buffSize * count, ctx.sampleRate)
+  //   this.blendAmount = 3
+  //   for (let i = 0; i < count; i++) {
+  //     for (let j = 0; j < this.buffSize; j++) {
+  //       bigBuffer.getChannelData(0)[i * this.buffSize + j] = this.buffer.getChannelData(0)[j]
+  //     }
+  //     this.modSine()
+  //   }
+  //   utils.saveWav(bigBuffer, generateName())
+  // },
+
   // ============= Playback functions ================
 
   play() {
@@ -93,7 +106,7 @@ Alpine.data('app', () => ({
   // ============= General UX functions ================
 
   exportWav() {
-    utils.saveWav(buffer, generateName())
+    utils.saveWav(this.buffer, generateName())
   },
 
   // ============= Generator functions ================
